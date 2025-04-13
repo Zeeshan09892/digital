@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hacker Dashboard with Login | Signup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Share Tech Mono', monospace;
+      background-color: #000;
+      color: #00ff99;
+      overflow: hidden;
+      position: relative; /* Added to manage z-index */
+    }
+    .background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: repeating-linear-gradient(45deg, rgba(0, 255, 153, 0.1), rgba(0, 255, 153, 0.1) 1px, transparent 1px, transparent 15px);
+      z-index: -1; /* Already correct */
+      animation: scroll 8s linear infinite;
+      box-shadow: inset 0 0 50px rgba(0, 255, 153, 0.2);
+    }
+    @keyframes scroll {
+      0% { background-position: 0 0; }
+      100% { background-position: 800px 800px; }
+    }
+    .emoji {
+      position: absolute;
+      font-size: 20px;
+      color: #ff00ff;
+      pointer-events: none;
+      animation: float 10s infinite;
+      z-index: 1000; /* Lowered z-index to avoid blocking */
+      opacity: 0.6;
+      text-shadow: 0 0 10px #ff00ff;
+    }
+    @keyframes float {
+      0% { transform: translate(0, 0); }
+      50% { transform: translate(var(--x), var(--y)); }
+      100% { transform: translate(0, 0); }
+    }
+
+    /* Login/Signup */
+    .terminal {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      position: relative; /* Added to manage z-index */
+      z-index: 2000; /* Ensure form is above emojis */
+    }
+    .form-container {
+      background: #111;
+      border: 2px solid #00ff99;
+      padding: 30px;
+      border-radius: 10px;
+      width: 300px;
+      text-align: center;
+      box-shadow: 0 0 20px rgba(0, 255, 153, 0.5);
+      z-index: 2001; /* Ensure form is clickable */
+    }
+    .glitch {
+      font-size: 22px;
+      margin-bottom: 10px;
+      animation: glitch 1s infinite;
+      text-shadow: 0 0 10px #00ff99;
+    }
+    @keyframes glitch {
+      0% { transform: translate(0); }
+      20% { transform: translate(-2px, 2px); }
+      40% { transform: translate(2px, -2px); }
+      60% { transform: translate(-2px, 0); }
+      80% { transform: translate(2px, 0); }
+      100% { transform: translate(0); }
+    }
+    .toggle {
+      display: flex;
+      justify-content: center;
+      gap: 10px; /* Added gap for better spacing */
+    }
+    .toggle button {
+      background-color: #000;
+      color: #00ff99;
+      border: 2px solid #00ff99;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 2002; /* Ensure buttons are clickable */
+    }
+    .toggle button:hover {
+      background-color: #00ff99;
+      color: #000;
+      box-shadow: 0 0 15px #00ff99;
+    }
+    .form {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .form.active {
+      display: flex;
+    }
+    .form input, .form button {
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+      background: #222;
+      color: #00ff99;
+      font-family: 'Share Tech Mono', monospace;
+      z-index: 2002; /* Ensure inputs and buttons are clickable */
+    }
+    .form button {
+      background-color: #00ff99;
+      color: #000;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .form button:hover {
+      box-shadow: 0 0 15px #00ff99;
+    }
+    .error {
+      color: red;
+      font-size: 12px;
+    }
+    .signup-link {
+      margin-top: 10px;
+      color: #00ff99;
+      cursor: pointer;
+      z-index: 2002; /* Ensure link is clickable */
+    }
+    .signup-link:hover {
+      text-decoration: underline;
+      color: #ff00ff;
+    }
+
+    /* Dashboard */
+    .dashboard {
+      display: none;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+    }
+    .sidebar {
+      width: 240px;
+      background-color: #111;
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      border-right: 2px solid #00ff99;
+      box-shadow: 0 0 20px rgba(0, 255, 153, 0.3);
+    }
+    .sidebar h2 {
+      font-size: 24px;
+      text-align: center;
+      animation: glitch 1s infinite;
+      text-shadow: 0 0 10px #00ff99;
+    }
+    .sidebar button {
+      background-color: #1a1a1a;
+      color: #00ff99;
+      border: 2px solid #00ff99;
+      border-radius: 8px;
+      padding: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .sidebar button:hover {
+      background-color: #00ff99;
+      color: #000;
+      box-shadow: 0 0 15px #00ff99;
+      animation: glitch 0.5s infinite;
+    }
+    .main {
+      flex: 1;
+      padding: 40px;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.8);
+    }
+    .main h1 {
+      text-align: center;
+      animation: glitch 1s infinite;
+      text-shadow: 0 0 10px #00ff99;
+    }
+    .course-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 30px;
+      margin-top: 30px;
+    }
+    .course-card {
+      background-color: #1a1a1a;
+      border: 2px solid #00ff99;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .course-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px #00ff99;
+      border-color: #ff00ff;
+    }
+    .hidden {
+      display: none;
+    }
+    .settings-section, .profile-section {
+      margin-top: 30px;
+      background: #1a1a1a;
+      padding: 20px;
+      border: 2px solid #00ff99;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .settings-section h3, .profile-section h3 {
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px #00ff99;
+    }
+    .settings-section label, .profile-section label {
+      display: block;
+      margin: 10px 0 5px;
+      color: #00ff99;
+    }
+    .settings-section input, .profile-section input {
+      width: 100%;
+      max-width: 300px;
+      padding: 8px;
+      background: #222;
+      color: #00ff99;
+      border: 1px solid #00ff99;
+      border-radius: 5px;
+      font-family: 'Share Tech Mono', monospace;
+    }
+    .settings-section button, .profile-section button {
+      margin-top: 10px;
+      background-color: #00ff99;
+      color: #000;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .settings-section button:hover, .profile-section button:hover {
+      background-color: #ff00ff;
+      color: #fff;
+      box-shadow: 0 0 10px #ff00ff;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 3000; /* Increased to ensure modal is on top */
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #111;
+      border: 2px solid #00ff99;
+      padding: 30px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 0 20px #00ff99;
+      animation: glitch 1s infinite;
+    }
+    .modal-content p {
+      margin: 10px 0;
+      font-size: 18px;
+      text-shadow: 0 0 10px #00ff99;
+    }
+    .modal-content .signature {
+      color: #ff00ff;
+      font-size: 16px;
+      text-shadow: 0 0 10px #ff00ff;
+    }
+    .modal-content .timer {
+      font-size: 24px;
+      color: #00ff99;
+      text-shadow: 0 0 10px #00ff99;
+      margin-top: 10px;
+    }
+    .close-btn {
+      background: #00ff99;
+      color: #000;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: all 0.3s ease;
+    }
+    .close-btn:hover {
+      background: #ff00ff;
+      color: #fff;
+      box-shadow: 0 0 10px #ff00ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="background"></div>
+
+  <!-- Modal for Course Messages -->
+  <div class="modal" id="courseModal">
+    <div class="modal-content">
+      <p id="modalMessage"></p>
+      <p id="modalSignature" class="signature"></p>
+      <div id="modalTimer" class="timer"></div>
+      <button class="close-btn" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+
+  <!-- Login and Signup Section -->
+  <div class="terminal" id="authSection">
+    <div class="form-container">
+      <h1><span class="glitch" data-text="Hacker Portal">Login</span></h1>
+      <div class="toggle">
+        <button id="loginBtn">Login</button>
+        <button id="signupBtn">Signup</button>
+      </div>
+      <form id="loginForm" class="form active">
+        <input type="text" id="loginUsername" placeholder="Username" required />
+        <input type="password" id="loginPassword" placeholder="Password" required />
+        <button type="submit">Login</button>
+        <p id="loginError" class="error"></p>
+      </form>
+      <form id="signupForm" class="form">
+        <input type="text" id="signupUsername" placeholder="Username" required />
+        <input type="email" id="signupEmail" placeholder="Email" required />
+        <input type="password" id="signupPassword" placeholder="Password" required />
+        <button type="submit">Register</button>
+        <p id="signupError" class="error"></p>
+      </form>
+      <div class="signup-link" id="signupLink">Don't have an account? Sign up</div>
+    </div>
+  </div>
+
+  <!-- Dashboard Section -->
+  <div class="dashboard" id="dashboardSection">
+    <div class="sidebar">
+      <h2>💻 Hacker Dashboard</h2>
+      <button onclick="showCourses()">📚 Courses</button>
+      <button onclick="showSettings()">⚙️ Settings</button>
+      <button onclick="showProfile()">👤 Profile</button>
+      <button onclick="logout()">🚪 Logout</button>
+    </div>
+    <div class="main">
+      <h1>Welcome to Hacker Themed Learning Panel</h1>
+      <div id="courses" class="course-grid">
+        <div class="course-card" onclick="showCourseMessage('Adsterra Master Course')">
+          <h3>Adsterra Master Course</h3>
+          <p>Master Adsterra earning strategies.</p>
+        </div>
+        <div class="course-card" onclick="showCourseMessage('Adsense Master Loading Course')">
+          <h3>Adsense Master Loading Course</h3>
+          <p>Advanced Adsense loading techniques.</p>
+        </div>
+        <div class="course-card" onclick="showCourseMessage('Adsterra Black Hat Course')">
+          <h3>Adsterra Black Hat Course</h3>
+          <p>Explore black hat Adsterra methods.</p>
+        </div>
+        <div class="course-card" onclick="showCourseMessage('Adsterra White Hat Course')">
+          <h3>Adsterra White Hat Course</h3>
+          <p>Ethical Adsterra earning hacks.</p>
+        </div>
+        <div class="course-card" onclick="showCourseMessage('Adsense Loading Course')">
+          <h3>Adsense Loading Course</h3>
+          <p>Boost Adsense revenue with loading.</p>
+        </div>
+        <div class="course-card" onclick="showCourseMessage('Facebook Traffic Earning Course')">
+          <h3>Facebook Traffic Earning Course</h3>
+          <p>Earn via Facebook traffic.</p>
+        </div>
+        <div class="course-card" onclick="showCourseMessage('YouTube Automation Course')">
+          <h3>YouTube Automation Course</h3>
+          <p>Learn to automate YouTube earnings.</p>
+        </div>
+        <div class="course-card" onclick="showCourseMessage('YouTube Automation Master Course')">
+          <h3>YouTube Automation Master Course</h3>
+          <p>Master YouTube automation techniques.</p>
+        </div>
+      </div>
+      <div id="settings" class="settings-section hidden">
+        <h3>⚙️ Settings</h3>
+        <label for="theme">Theme:</label>
+        <select id="theme" onchange="changeTheme()">
+          <option value="hacker">Hacker (Default)</option>
+          <option value="dark">Dark</option>
+        </select>
+        <label for="newPassword">Change Password:</label>
+        <input type="password" id="newPassword" placeholder="New Password" />
+        <button onclick="updatePassword()">Update Password</button>
+      </div>
+      <div id="profile" class="profile-section hidden">
+        <h3>👤 Profile</h3>
+        <p>Username: <span id="profileUsername"></span></p>
+        <p>Email: <span id="profileEmail"></span></p>
+        <label for="editUsername">Edit Username:</label>
+        <input type="text" id="editUsername" placeholder="New Username" />
+        <label for="editEmail">Edit Email:</label>
+        <input type="email" id="editEmail" placeholder="New Email" />
+        <button onclick="updateProfile()">Update Profile</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Emoji Animation
+    function createEmojis() {
+      const texts = ["I love M", "❤️"];
+      for (let i = 0; i < 15; i++) {
+        const emoji = document.createElement("div");
+        emoji.className = "emoji";
+        emoji.textContent = texts[Math.floor(Math.random() * texts.length)];
+        emoji.style.left = Math.random() * 100 + "vw";
+        emoji.style.top = Math.random() * 100 + "vh";
+        emoji.style.setProperty("--x", (Math.random() * 200 - 100) + "px");
+        emoji.style.setProperty("--y", (Math.random() * 200 - 100) + "px");
+        emoji.style.animationDuration = Math.random() * 5 + 5 + "s";
+        document.body.appendChild(emoji);
+      }
+    }
+
+    // Run on page load
+    document.addEventListener("DOMContentLoaded", () => {
+      createEmojis();
+      const storedUsername = localStorage.getItem("username");
+      const storedEmail = localStorage.getItem("email");
+      if (storedUsername && storedEmail) {
+        document.getElementById("profileUsername").textContent = storedUsername;
+        document.getElementById("profileEmail").textContent = storedEmail;
+      }
+    });
+
+    // Course Message Modal
+    function showCourseMessage(courseTitle) {
+      const modal = document.getElementById("courseModal");
+      const modalMessage = document.getElementById("modalMessage");
+      const modalSignature = document.getElementById("modalSignature");
+      const modalTimer = document.getElementById("modalTimer");
+
+      if (courseTitle === "YouTube Automation Course" || courseTitle === "YouTube Automation Master Course") {
+        modalMessage.textContent = "First course will be uploaded after 3 days.";
+        modalSignature.textContent = "";
+        modalTimer.style.display = "block";
+        startTimer();
+      } else {
+        modalMessage.textContent = "Please wait, you will get the course soon.";
+        modalSignature.textContent = "zeshan";
+        modalTimer.style.display = "none";
+      }
+
+      modal.style.display = "flex";
+    }
+
+    function closeModal() {
+      const modal = document.getElementById("courseModal");
+      const modalTimer = document.getElementById("modalTimer");
+      modal.style.display = "none";
+      modalTimer.textContent = "";
+      clearInterval(window.timerInterval);
+    }
+
+    // 3-Day Timer for YouTube Automation Courses
+    function startTimer() {
+      const modalTimer = document.getElementById("modalTimer");
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() + 3);
+      targetDate.setHours(0, 0, 0, 0);
+
+      function updateTimer() {
+        const now = new Date();
+        const timeLeft = targetDate - now;
+
+        if (timeLeft <= 0) {
+          modalTimer.textContent = "Course is now available!";
+          clearInterval(window.timerInterval);
+          return;
+        }
+
+        const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+        modalTimer.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+      }
+
+      updateTimer();
+      window.timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    // Login/Signup Logic
+    const loginBtn = document.getElementById("loginBtn");
+    const signupBtn = document.getElementById("signupBtn");
+    const signupLink = document.getElementById("signupLink");
+    const loginForm = document.getElementById("loginForm");
+    const signupForm = document.getElementById("signupForm");
+    const authSection = document.getElementById("authSection");
+    const dashboardSection = document.getElementById("dashboardSection");
+
+    loginBtn.addEventListener("click", () => {
+      console.log("Login button clicked"); // Debugging
+      signupForm.classList.remove("active");
+      loginForm.classList.add("active");
+      signupLink.style.display = "block"; // Ensure link is visible
+    });
+
+    signupBtn.addEventListener("click", () => {
+      console.log("Signup button clicked"); // Debugging
+      loginForm.classList.remove("active");
+      signupForm.classList.add("active");
+      signupLink.style.display = "none"; // Hide link on signup form
+    });
+
+    signupLink.addEventListener("click", () => {
+      console.log("Signup link clicked"); // Debugging
+      loginForm.classList.remove("active");
+      signupForm.classList.add("active");
+      signupLink.style.display = "none";
+    });
+
+    signupForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      console.log("Signup form submitted"); // Debugging
+      const username = document.getElementById("signupUsername").value;
+      const email = document.getElementById("signupEmail").value;
+      const password = document.getElementById("signupPassword").value;
+      localStorage.setItem("username", username);
+      localStorage.setItem("email", email);
+      localStorage.setItem("password", password);
+      alert("Signup successful! Now login.");
+      loginBtn.click();
+    });
+
+    loginForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      console.log("Login form submitted"); // Debugging
+      const enteredUsername = document.getElementById("loginUsername").value;
+      const enteredPassword = document.getElementById("loginPassword").value;
+      const storedUsername = localStorage.getItem("username");
+      const storedPassword = localStorage.getItem("password");
+
+      if (enteredUsername === storedUsername && enteredPassword === storedPassword) {
+        authSection.style.display = "none";
+        dashboardSection.style.display = "flex";
+        showCourses();
+        document.getElementById("profileUsername").textContent = storedUsername;
+        document.getElementById("profileEmail").textContent = localStorage.getItem("email");
+      } else {
+        document.getElementById("loginError").textContent = "Invalid username or password";
+      }
+    });
+
+    function showCourses() {
+      document.getElementById("courses").classList.remove("hidden");
+      document.getElementById("settings").classList.add("hidden");
+      document.getElementById("profile").classList.add("hidden");
+    }
+
+    function showSettings() {
+      document.getElementById("courses").classList.add("hidden");
+      document.getElementById("settings").classList.remove("hidden");
+      document.getElementById("profile").classList.add("hidden");
+    }
+
+    function showProfile() {
+      document.getElementById("courses").classList.add("hidden");
+      document.getElementById("settings").classList.add("hidden");
+      document.getElementById("profile").classList.remove("hidden");
+    }
+
+    function updatePassword() {
+      const newPassword = document.getElementById("newPassword").value;
+      if (newPassword) {
+        localStorage.setItem("password", newPassword);
+        alert("Password updated successfully!");
+      } else {
+        alert("Please enter a new password.");
+      }
+    }
+
+    function updateProfile() {
+      const newUsername = document.getElementById("editUsername").value;
+      const newEmail = document.getElementById("editEmail").value;
+      if (newUsername) {
+        localStorage.setItem("username", newUsername);
+        document.getElementById("profileUsername").textContent = newUsername;
+      }
+      if (newEmail) {
+        localStorage.setItem("email", newEmail);
+        document.getElementById("profileEmail").textContent = newEmail;
+      }
+      if (newUsername || newEmail) {
+        alert("Profile updated successfully!");
+      } else {
+        alert("Please enter a new username or email.");
+      }
+    }
+
+    function changeTheme() {
+      const theme = document.getElementById("theme").value;
+      if (theme === "dark") {
+        document.body.style.backgroundColor = "#111";
+        document.body.style.color = "#fff";
+        document.querySelector(".background").style.background = "repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05) 1px, transparent 1px, transparent 15px)";
+        document.querySelectorAll(".course-card, .settings-section, .profile-section").forEach(el => {
+          el.style.borderColor = "#fff";
+        });
+        document.querySelectorAll(".sidebar button").forEach(btn => {
+          btn.style.borderColor = "#fff";
+          btn.style.color = "#fff";
+        });
+      } else {
+        document.body.style.backgroundColor = "#000";
+        document.body.style.color = "#00ff99";
+        document.querySelector(".background").style.background = "repeating-linear-gradient(45deg, rgba(0, 255, 153, 0.1), rgba(0, 255, 153, 0.1) 1px, transparent 1px, transparent 15px)";
+        document.querySelectorAll(".course-card, .settings-section, .profile-section").forEach(el => {
+          el.style.borderColor = "#00ff99";
+        });
+        document.querySelectorAll(".sidebar button").forEach(btn => {
+          btn.style.borderColor = "#00ff99";
+          btn.style.color = "#00ff99";
+        });
+      }
+    }
+
+    function logout() {
+      dashboardSection.style.display = "none";
+      authSection.style.display = "flex";
+    }
+  </script>
+</body>
+</html>
